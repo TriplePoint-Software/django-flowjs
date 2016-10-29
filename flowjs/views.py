@@ -8,46 +8,32 @@ from .models import FlowFile, FlowFileChunk
 class FlowFileForm(forms.Form):
     file = forms.FileField()
 
-
-class UploadView(View):
-
-    def dispatch(self, request, *args, **kwargs):
-        # get flow variables
-        request_method_data = getattr(request, request.method)
-        self.flowChunkNumber = int(request_method_data.get('flowChunkNumber'))
-        self.flowChunckSize = int(request_method_data.get('flowChunkSize'))
-        self.flowCurrentChunkSize = int(
-            request_method_data.get('flowCurrentChunkSize'))
-        self.flowTotalSize = int(request_method_data.get('flowTotalSize'))
-        self.flowIdentifier = request_method_data.get('flowIdentifier')
-        self.flowFilename = request_method_data.get('flowFilename')
-        self.flowRelativePath = request_method_data.get('flowRelativePath')
-        self.flowTotalChunks = int(request_method_data.get('flowTotalChunks'))
+def upload(request):
+    request_method_data = getattr(request, request.method)
+    flowChunkNumber = int(request_method_data.get('flowChunkNumber'))
+    flowChunckSize = int(request_method_data.get('flowChunkSize'))
+    flowCurrentChunkSize = int(
+        request_method_data.get('flowCurrentChunkSize'))
+    flowTotalSize = int(request_method_data.get('flowTotalSize'))
+    flowIdentifier = request_method_data.get('flowIdentifier')
+    flowFilename = request_method_data.get('flowFilename')
+    flowRelativePath = request_method_data.get('flowRelativePath')
+    flowTotalChunks = int(request_method_data.get('flowTotalChunks'))
 
         # identifier is a combination of session key and flow identifier
-        self.identifier = (
-            '%s-%s' % (request.session.session_key, self.flowIdentifier))[:200]
-        return super(UploadView, self).dispatch(request, *args, **kwargs)
+    identifier = (
+        '%s-%s' % (request.session.session_key, flowIdentifier))[:200]
 
-    def get(self, *args, **kwargs):
-        """
-        Flow.js test if chunk exist before upload it again.
-        Return 200 if exist.
-        """
-        get_object_or_404(FlowFileChunk, number=self.flowChunkNumber,
-                          parent__identifier=self.identifier)
-        return http.HttpResponse(self.identifier)
-
-    def post(self, request, *args, **kwargs):
-        """
-        Upload the file by chunks
-        """
-
+    if request.method == 'GET':
+        get_object_or_404(FlowFileChunk, number=flowChunkNumber,
+                          parent__identifier=identifier)
+        return http.HttpResponse(identifier)
+    elif request.method == 'POST':
         # get file or create if doesn't exist the identifier
-        flow_file, created = FlowFile.objects.get_or_create(identifier=self.identifier, defaults={
-            'original_filename': self.flowFilename,
-            'total_size': self.flowTotalSize,
-            'total_chunks': self.flowTotalChunks,
+        flow_file, created = FlowFile.objects.get_or_create(identifier=identifier, defaults={
+            'original_filename': flowFilename,
+            'total_size': flowTotalSize,
+            'total_chunks': flowTotalChunks,
         })
 
         # validate the file form
@@ -56,20 +42,16 @@ class UploadView(View):
             return http.HttpResponseBadRequest(form.errors)
 
         # avoiding duplicated chucks
-        chunk, created = flow_file.chunks.get_or_create(number=self.flowChunkNumber, defaults={
+        chunk, created = flow_file.chunks.get_or_create(number=flowChunkNumber, defaults={
             'file': form.cleaned_data['file'],
         })
 
         return http.HttpResponse(flow_file.identifier)
-
-
-class CheckStateView(View):
-
-    def get(self, request, *args, **kwargs):
-        """
-        Return the status of the file uploaded. This is important for big files,
-        because user don't need to wait for the file to be ready.
-        """
+        
+def check_state(request):
+    if request.method == 'GET':
         flow = get_object_or_404(
             FlowFile, identifier=request.GET.get('identifier', ''))
         return http.HttpResponse(flow.state)
+    return http.HttpResponse("Only 'GET' is allowed'")
+
