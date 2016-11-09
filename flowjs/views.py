@@ -1,3 +1,4 @@
+import json
 from django import forms, http
 from django.shortcuts import get_object_or_404
 from django.views.generic.base import View
@@ -20,7 +21,9 @@ def upload(request):
     flowRelativePath = request_method_data.get('flowRelativePath')
     flowTotalChunks = int(request_method_data.get('flowTotalChunks'))
 
-        # identifier is a combination of session key and flow identifier
+    # identifier is a combination of session key and flow identifier
+    if not request.session.session_key:
+        request.session.save()
     identifier = (
         '%s-%s' % (request.session.session_key, flowIdentifier))[:200]
 
@@ -46,7 +49,13 @@ def upload(request):
             'file': form.cleaned_data['file'],
         })
 
-        return http.HttpResponse(flow_file.identifier)
+        return http.HttpResponse(json.dumps({
+            'identifier': flow_file.identifier,
+            'url': flow_file.url,
+            'name': flow_file.original_filename,
+            'ext': flow_file.extension,
+            'id': flow_file.id
+        }), content_type="application/json")
         
 def check_state(request):
     if request.method == 'GET':
