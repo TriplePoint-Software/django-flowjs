@@ -9,7 +9,7 @@ def chunk_upload_to(instance, filename):
     """
     Save chunk to the right path and filename based in is number
     """
-    return os.path.join(FLOWJS_PATH, instance.filename)
+    return os.path.join(FLOWJS_PATH, 'chunks', instance.filename)
 
 
 def guess_mimetype(url):
