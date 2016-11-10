@@ -1,3 +1,5 @@
+**THIS FORK IS CUSTOMIZED TO WORK WITH DJANGO 1.4.22+**
+
 django-flowjs
 =============
 
