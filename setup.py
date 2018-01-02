@@ -14,7 +14,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'django>=1.4',
+        'django>=1.9',
     ],
     classifiers=[
         'Development Status :: 1 - Pre-Alpha',
