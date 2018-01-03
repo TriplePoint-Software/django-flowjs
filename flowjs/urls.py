@@ -1,9 +1,11 @@
 from django.conf.urls import patterns, url
+
 from views import upload, check_state
 
+app_name = 'flowjs'
 
 # JSON REQUESTS
-urlpatterns = patterns('',
-                       url(r'^upload/$', upload),
-                       url(r'^state/$', check_state),
-)
+urlpatterns = [
+    url(r'^upload/$', upload),
+    url(r'^state/$', check_state),
+]
